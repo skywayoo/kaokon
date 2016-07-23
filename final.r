@@ -193,6 +193,7 @@ d2d5_7_n = na_process(d2d5_7_n)
 is.nan(d2d5_4_n[[17]][,10])
 d2d5_4_n[[17]][,9]=round((round(sum(d2d5_4_n[[16]][,9]))/288+round(sum(d2d5_4_n[[18]][,9])/288))/2)
 d2d5_4_n[[17]][,10]=round((round(sum(d2d5_4_n[[16]][,10]))/288+round(sum(d2d5_4_n[[18]][,10])/288))/2)
+d2d5_4_n[[17]][,11]=round((round(sum(d2d5_4_n[[16]][,11]))/288+round(sum(d2d5_4_n[[18]][,11])/288))/2)
 
 #list all
 way_all = list()
@@ -204,7 +205,6 @@ way_all[[5]] = d2d5_5_n
 way_all[[6]] = d2d5_6_n
 way_all[[7]] = d2d5_7_n
 
-names(test)=c(1:19)
 #get final travel
 get_d2d_final <- function(way_all,week){
   final_value =list()
@@ -247,7 +247,7 @@ get_d2d_final <- function(way_all,week){
       if(week==7){
         for(t in 1:length(travel)){
           if(v>288){
-          travel = way_all[[1]][[day]]
+          travel = way_all[[1]][[day+1]]
           count[[t]]=travel[v-288,t]
           v_num <- sum(unlist(count))
           if(v_num>=valid[1]){
@@ -279,16 +279,15 @@ get_d2d_final <- function(way_all,week){
 }
 #note that hear need 1 2 4 5 6 7 then do #123
 f_way_1 = get_d2d_final(way_all,1)
-f_way_1[[48]]
 f_way_2 = get_d2d_final(way_all,2)
 f_way_4 = get_d2d_final(way_all,4)
 f_way_5 = get_d2d_final(way_all,5)
 f_way_6 = get_d2d_final(way_all,6)
 f_way_7 = get_d2d_final(way_all,7)
+
 #way_all[[3]] = way_all[[3]][1:52]
 f_way_3 = get_d2d_final(way_all,3)
 
-f_way_7[[1]]
 
 
 

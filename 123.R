@@ -67,7 +67,7 @@ cv_best_model <- function(ldf,day,cv_best){
     lro <- mx.symbol.LinearRegressionOutput(fc3)
     mx.set.seed(0)
     #288 0.02
-    model <- mx.model.FeedForward.create(lro,X=train.x,y=train.y,ctx=mx.cpu(),num.round=5,array.batch.size = 100, 
+    model <- mx.model.FeedForward.create(lro,X=train.x,y=train.y,ctx=mx.cpu(),num.round=5000,array.batch.size = 100, 
                                          learning.rate=0.05,momentum=0.9,eval.metric=mx.metric.mae)
     pred = predict(model,train.x,ctx = mx.cpu())
     pred = round(as.vector(pred)*(max(dat$X0)-min(dat$X0))+min(dat$X0),2)
@@ -91,50 +91,213 @@ day_val = list()
 new_dat = list()
 week_idx = rep(1:7,1000)
 #input first=預測第一天禮拜幾 ,end=預測幾天? test=當下的前五筆+目前的值
-first=
-end=
-test=
+first=1
+end=7
+week_idx[first:end]
+test= c(14000,14100,14200,14300,14400,15000)
 for(d in week_idx[first:end]){
   cat(d,"\n")
-  all = ldf[[d]][,-1]
-  prev_6 = rbind(all[,1:6],test)
-  maxs <- apply(prev_6,2,max) 
-  mins <- apply(prev_6,2,min)
-  prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
-  hist_dat = all
-  maxs_his <- apply(hist_dat,2,max) 
-  mins_his <- apply(hist_dat,2,min)
-  history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
   if(d==1){
+    all = ldf[[d]][,-1]
+    prev_6 = rbind(all[,1:6],test)
+    maxs <- apply(prev_6,2,max) 
+    mins <- apply(prev_6,2,min)
+    prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
+    hist_dat = all
+    maxs_his <- apply(hist_dat,2,max) 
+    mins_his <- apply(hist_dat,2,min)
+    history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
     history <- history_all[284:571,]
     pred=list()
     pred_normal = list()
     for(i in 1:288){
       hist_val = history[i,c(7:length(history[1,]))]
-      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[1]][,1])+i,][-6],hist_val))))
+      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[d]][,1])+i,][-6],hist_val))))
       pred[[i]] = predict(mon[[4]],test.x,ctx = mx.cpu())
       pred_normal[[i]] = round(unlist(pred)*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2)
-      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[1]][,1])+i,c(-1)],pred[[i]]))
+      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[d]][,1])+i,c(-1)],pred[[i]]))
     }
-    new_dat[[d]] = prev_6_dat[length(ldf[[1]][,1]):length(prev_6_dat[,1]),1:6]
+    new_dat[[d]] = prev_6_dat[length(ldf[[d]][,1]):length(prev_6_dat[,1]),1:6]
+    prev_6_dat[length(prev_6_dat[,1]),1]
     day_val[[d]] = list(unlist(pred),unlist(pred_normal))
+    test = c(round(prev_6_dat[length(prev_6_dat[,1]),2]*(max(prev_6$X4)-min(prev_6$X4))+min(prev_6$X4),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),3]*(max(prev_6$X3)-min(prev_6$X3))+min(prev_6$X3),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),4]*(max(prev_6$X2)-min(prev_6$X2))+min(prev_6$X2),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),5]*(max(prev_6$X1)-min(prev_6$X1))+min(prev_6$X1),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),6]*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2))
   }
   if(d==2){
+    all = ldf[[d]][,-1]
+    prev_6 = rbind(all[,1:6],test)
+    maxs <- apply(prev_6,2,max) 
+    mins <- apply(prev_6,2,min)
+    prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
+    hist_dat = all
+    maxs_his <- apply(hist_dat,2,max) 
+    mins_his <- apply(hist_dat,2,min)
+    history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
     history =history_all[1:288,]
     pred=list()
     pred_normal = list()
     for(i in 1:288){
       hist_val = history[i,c(7:length(history[1,]))]
-      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[1]][,1])+i,][-6],hist_val))))
-      pred[[i]] = predict(mon[[4]],test.x,ctx = mx.cpu())
+      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[d]][,1])+i,][-6],hist_val))))
+      pred[[i]] = predict(tues[[4]],test.x,ctx = mx.cpu())
       pred_normal[[i]] = round(unlist(pred)*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2)
-      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[1]][,1])+i,c(-1)],pred[[i]]))
+      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[d]][,1])+i,c(-1)],pred[[i]]))
     }
-    new_dat[[d]] = prev_6_dat[length(ldf[[1]][,1]):length(prev_6_dat[,1]),1:6]
+    new_dat[[d]] = prev_6_dat[length(ldf[[d]][,1]):length(prev_6_dat[,1]),1:6]
     day_val[[d]] = list(unlist(pred),unlist(pred_normal))
+    test = c(round(prev_6_dat[length(prev_6_dat[,1]),2]*(max(prev_6$X4)-min(prev_6$X4))+min(prev_6$X4),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),3]*(max(prev_6$X3)-min(prev_6$X3))+min(prev_6$X3),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),4]*(max(prev_6$X2)-min(prev_6$X2))+min(prev_6$X2),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),5]*(max(prev_6$X1)-min(prev_6$X1))+min(prev_6$X1),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),6]*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2))
+  }
+  if(d==3){
+    all = ldf[[d]][,-1]
+    prev_6 = rbind(all[,1:6],test)
+    maxs <- apply(prev_6,2,max) 
+    mins <- apply(prev_6,2,min)
+    prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
+    hist_dat = all
+    maxs_his <- apply(hist_dat,2,max) 
+    mins_his <- apply(hist_dat,2,min)
+    history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
+    history =history_all[1:288,]
+    pred=list()
+    pred_normal = list()
+    for(i in 1:288){
+      hist_val = history[i,c(7:length(history[1,]))]
+      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[d]][,1])+i,][-6],hist_val))))
+      pred[[i]] = predict(wend[[4]],test.x,ctx = mx.cpu())
+      pred_normal[[i]] = round(unlist(pred)*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2)
+      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[d]][,1])+i,c(-1)],pred[[i]]))
+    }
+    new_dat[[d]] = prev_6_dat[length(ldf[[d]][,1]):length(prev_6_dat[,1]),1:6]
+    day_val[[d]] = list(unlist(pred),unlist(pred_normal))
+    test = c(round(prev_6_dat[length(prev_6_dat[,1]),2]*(max(prev_6$X4)-min(prev_6$X4))+min(prev_6$X4),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),3]*(max(prev_6$X3)-min(prev_6$X3))+min(prev_6$X3),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),4]*(max(prev_6$X2)-min(prev_6$X2))+min(prev_6$X2),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),5]*(max(prev_6$X1)-min(prev_6$X1))+min(prev_6$X1),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),6]*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2))
+  }
+  if(d==4){
+    all = ldf[[d]][,-1]
+    prev_6 = rbind(all[,1:6],test)
+    maxs <- apply(prev_6,2,max) 
+    mins <- apply(prev_6,2,min)
+    prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
+    hist_dat = all
+    maxs_his <- apply(hist_dat,2,max) 
+    mins_his <- apply(hist_dat,2,min)
+    history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
+    history =history_all[1:288,]
+    pred=list()
+    pred_normal = list()
+    for(i in 1:288){
+      hist_val = history[i,c(7:length(history[1,]))]
+      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[d]][,1])+i,][-6],hist_val))))
+      pred[[i]] = predict(thur[[4]],test.x,ctx = mx.cpu())
+      pred_normal[[i]] = round(unlist(pred)*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2)
+      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[d]][,1])+i,c(-1)],pred[[i]]))
+    }
+    new_dat[[d]] = prev_6_dat[length(ldf[[d]][,1]):length(prev_6_dat[,1]),1:6]
+    day_val[[d]] = list(unlist(pred),unlist(pred_normal))
+    test = c(round(prev_6_dat[length(prev_6_dat[,1]),2]*(max(prev_6$X4)-min(prev_6$X4))+min(prev_6$X4),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),3]*(max(prev_6$X3)-min(prev_6$X3))+min(prev_6$X3),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),4]*(max(prev_6$X2)-min(prev_6$X2))+min(prev_6$X2),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),5]*(max(prev_6$X1)-min(prev_6$X1))+min(prev_6$X1),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),6]*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2))
+  }
+  if(d==5){
+    all = ldf[[d]][,-1]
+    prev_6 = rbind(all[,1:6],test)
+    maxs <- apply(prev_6,2,max) 
+    mins <- apply(prev_6,2,min)
+    prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
+    hist_dat = all
+    maxs_his <- apply(hist_dat,2,max) 
+    mins_his <- apply(hist_dat,2,min)
+    history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
+    history =history_all[1:288,]
+    pred=list()
+    pred_normal = list()
+    for(i in 1:288){
+      hist_val = history[i,c(7:length(history[1,]))]
+      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[d]][,1])+i,][-6],hist_val))))
+      pred[[i]] = predict(fri[[4]],test.x,ctx = mx.cpu())
+      pred_normal[[i]] = round(unlist(pred)*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2)
+      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[d]][,1])+i,c(-1)],pred[[i]]))
+    }
+    new_dat[[d]] = prev_6_dat[length(ldf[[d]][,1]):length(prev_6_dat[,1]),1:6]
+    day_val[[d]] = list(unlist(pred),unlist(pred_normal))
+    test = c(round(prev_6_dat[length(prev_6_dat[,1]),2]*(max(prev_6$X4)-min(prev_6$X4))+min(prev_6$X4),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),3]*(max(prev_6$X3)-min(prev_6$X3))+min(prev_6$X3),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),4]*(max(prev_6$X2)-min(prev_6$X2))+min(prev_6$X2),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),5]*(max(prev_6$X1)-min(prev_6$X1))+min(prev_6$X1),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),6]*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2))
+  }
+  if(d==6){
+    all = ldf[[d]][,-1]
+    prev_6 = rbind(all[,1:6],test)
+    maxs <- apply(prev_6,2,max) 
+    mins <- apply(prev_6,2,min)
+    prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
+    hist_dat = all
+    maxs_his <- apply(hist_dat,2,max) 
+    mins_his <- apply(hist_dat,2,min)
+    history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
+    history =history_all[1:288,]
+    pred=list()
+    pred_normal = list()
+    for(i in 1:288){
+      hist_val = history[i,c(7:length(history[1,]))]
+      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[d]][,1])+i,][-6],hist_val))))
+      pred[[i]] = predict(sat[[4]],test.x,ctx = mx.cpu())
+      pred_normal[[i]] = round(unlist(pred)*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2)
+      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[d]][,1])+i,c(-1)],pred[[i]]))
+    }
+    new_dat[[d]] = prev_6_dat[length(ldf[[d]][,1]):length(prev_6_dat[,1]),1:6]
+    day_val[[d]] = list(unlist(pred),unlist(pred_normal))
+    test = c(round(prev_6_dat[length(prev_6_dat[,1]),2]*(max(prev_6$X4)-min(prev_6$X4))+min(prev_6$X4),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),3]*(max(prev_6$X3)-min(prev_6$X3))+min(prev_6$X3),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),4]*(max(prev_6$X2)-min(prev_6$X2))+min(prev_6$X2),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),5]*(max(prev_6$X1)-min(prev_6$X1))+min(prev_6$X1),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),6]*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2))
+  }
+  if(d==7){
+    all = ldf[[d]][,-1]
+    prev_6 = rbind(all[,1:6],test)
+    maxs <- apply(prev_6,2,max) 
+    mins <- apply(prev_6,2,min)
+    prev_6_dat <- data.matrix(scale(prev_6,center=mins,scale=maxs-mins))
+    hist_dat = all
+    maxs_his <- apply(hist_dat,2,max) 
+    mins_his <- apply(hist_dat,2,min)
+    history_all <- data.matrix(scale(hist_dat,center=mins_his,scale=maxs_his-mins_his))
+    history =history_all[1:288,]
+    pred=list()
+    pred_normal = list()
+    for(i in 1:288){
+      hist_val = history[i,c(7:length(history[1,]))]
+      test.x = data.matrix(t(as.matrix(c(prev_6_dat[length(ldf[[d]][,1])+i,][-6],hist_val))))
+      pred[[i]] = predict(sun[[4]],test.x,ctx = mx.cpu())
+      pred_normal[[i]] = round(unlist(pred)*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2)
+      prev_6_dat = rbind(prev_6_dat,c(prev_6_dat[length(ldf[[d]][,1])+i,c(-1)],pred[[i]]))
+    }
+    new_dat[[d]] = prev_6_dat[length(ldf[[d]][,1]):length(prev_6_dat[,1]),1:6]
+    day_val[[d]] = list(unlist(pred),unlist(pred_normal))
+    test = c(round(prev_6_dat[length(prev_6_dat[,1]),2]*(max(prev_6$X4)-min(prev_6$X4))+min(prev_6$X4),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),3]*(max(prev_6$X3)-min(prev_6$X3))+min(prev_6$X3),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),4]*(max(prev_6$X2)-min(prev_6$X2))+min(prev_6$X2),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),5]*(max(prev_6$X1)-min(prev_6$X1))+min(prev_6$X1),2),
+             round(prev_6_dat[length(prev_6_dat[,1]),6]*(max(prev_6$X0)-min(prev_6$X0))+min(prev_6$X0),2))
   }
 }
-  
+new_dat[[3]]
+#pred,pred_normal
+day_val[[1]][[2]]
   
   
   
